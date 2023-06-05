@@ -1,21 +1,19 @@
-#!/usr/bin/env python
+﻿#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#  For import execel from GS
+# For import execel from GS
 import os
+from pathlib import Path
 import arcpy
 import pandas as pd
-from arcgis.features import GeoAccessor
 from arcgis.gis import GIS
+from arcgis.features import GeoAccessor, FeatureLayer
 
-#  For creating pngs from pdfs
-import fitz  # pymupdf
-from pathlib import Path
+# For creating pngs from pdfs
+import fitz  # pip install pymupdf
 import cv2 # pip install opencv-python
 import numpy as np
 
-from arcgis.features import GeoAccessor, FeatureLayer
-from arcgis.gis import GIS
 
 
 # Make a list of dict with file name and attachment
@@ -38,12 +36,12 @@ def img_folder_items(png_folder) -> list:
 # Returns a list of dictionaries that contains the bp-name of bps with proveserieimage in png folder
 def proveserie_img_teg_200(item_name_and_attachment):
     liste = [dict for dict in item_name_and_attachment if '200_' in dict.get('file_name')]
-    for dict in liste:
-        bp_name_and_teg_nr = dict.get('file_name').split('RIG-TEG-')[-1]
+    for bpdict in liste:
+        bp_name_and_teg_nr = bpdict.get('file_name').split('RIG-TEG-')[-1]
         bp_name = 'SB-' + bp_name_and_teg_nr.split('-')[1]
         teg_nr = bp_name_and_teg_nr.split('-')[2].split('_')[0]
         # Update name of prøveserie
-        dict['file_name'] = bp_name
+        bpdict['file_name'] = bp_name
     return liste
 
 
@@ -55,8 +53,6 @@ def get_objectid(fl_hf, item_name_and_attachment):
         image_name, attachment = item.get('file_name'), item.get('attachment')
         # try:
         filtered_features = [f for f in fl_features if f.attributes['borhull'] == image_name]
-        # except Exception as e:
-            #print(f'Sammensvarer profil navn og nummer på bildet med linjenavnet i GIS? Bildet skal hete sonenr_sonenavn_profilnr, {type(e)}')
         if filtered_features:
             edit_feature = filtered_features[0]
         else:
@@ -174,7 +170,7 @@ def tolket(row):
 
 def bergkote(row):
     if row['Stopp'] in [93,94]:
-        val = str(round(row['Z'] - row['Løsm'], 2))
+        val = round(row['Z'] - row['Løsm'], 1)
     else:
         val = '~'
     return val
@@ -209,8 +205,11 @@ def df_from_geosuite(xl_file: str, pdf_folder: str, crs) -> pd.DataFrame:
     df['Bergkote'] = df.apply(bergkote, axis=1)
     df['kommentar'] = df.apply(z_kom, axis=1)
     df['Bilde'] = df.apply(bilde, url=pdf_folder, axis=1)
+    # Round relvant columns
+    round_cols = ['Z','Løsm','Fjell']
+    df[round_cols] = df[round_cols].round(1)
+    
     df.columns = [x.lower() for x in df.columns]
-
     #print(df.head())
 
     # convert df to spatially enabled dataframe
@@ -232,7 +231,7 @@ def main():
     pdf_folder = arcpy.GetParameterAsText(4)
     png_folder = pdf_folder + r'\images'
 
-    # Labtegninger, spesifik for sarpsbru:
+    # Labtegninger, spesifikt for sarpsbru:
     lab_pdf = r'\\nsv2-nasuni-02\fredrikstad\Prosjekt\O10245\10245026-01\10245026-01-03_ARBEIDSOMRAADE\21_fagomraade\11_Geoteknikk\10245026-03-TEGNINGER\GeoLab'
     lab_png = r'\\nsv2-nasuni-02\fredrikstad\Prosjekt\O10245\10245026-01\10245026-01-03_ARBEIDSOMRAADE\21_fagomraade\11_Geoteknikk\10245026-03-TEGNINGER\GeoLab\images'
     # Create pngs from PDFs:

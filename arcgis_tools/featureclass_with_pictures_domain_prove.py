@@ -53,6 +53,8 @@ from pypdf import PdfWriter, PdfReader
                 i0 = i+1
     return i0'''
 
+#def prove_pdf(pdffolder):
+
 
 
 #  Create pngs from PDFs: Two functions clip_image and pdf2img 
@@ -211,7 +213,7 @@ def main():
     pdf2img(pdf_folder)
     
     fc_out = os.path.join(ws, arcpy.ValidateFieldName(fc_name))
-    symbology_lyr = r'\\nsv2-nasuni-02\GIS\03_FO\Geo\01_Felles\LYRS\borepoints\DictSymbology_OneLabelClassCG.lyrx'
+    symbology_lyr = r'\\nsv2-nasuni-02\GIS\03_FO\Geo\01_Felles\LYRS\borepoints\ImportExcelFromGeosuite_improvedLabelsCG.lyrx'
     #symbology_lyr = r'https://cloudgis.multiconsult.no/server/rest/services/Hosted/TestSymbologyLyrx/FeatureServer/301'
     cols = ['Borhull', 'X', 'Y', 'Z', 'Metode', 'Stopp', 'Løsm', 'Fjell']
 

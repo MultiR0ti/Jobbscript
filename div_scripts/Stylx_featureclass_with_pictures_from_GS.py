@@ -11,7 +11,7 @@ from arcgis.gis import GIS
 #  For creating pngs from pdfs
 import fitz  # pymupdf
 from pathlib import Path
-import cv2
+from cv2 import cv2
 import numpy as np
 
 

@@ -27,60 +27,48 @@ def img_folder_items(png_folder):
         if 'pdf' in item:
             continue
         if item.split('.')[-1] == 'png':
-            profilnr = item.split('_')[-1].split('.')[0]
-            # If sone like 81_Brotnu_1.png
-            if len(item.split('_')) < 4:
-                sonenavn = item.split('_')[-2]
-                sonedict = {
-                    'profilnr': profilnr,
-                    'sonenavn': sonenavn,
-                    'attachment': png_folder+r'\\'+item
-                    }
-                items.append(sonedict)
-            # If sone like 113_Holum_Nordre_4.png
-            else:
-                sonenavn = item.split('_')[-3] + '_'+ item.split('_')[-2] 
-                sonedict = {
-                    'profilnr': profilnr,
-                    'sonenavn': sonenavn,
-                    'attachment': png_folder + '\\' + item
-                    }
-                items.append(sonedict)
-
+            name = item.split('.')[0]
+            # If item like 81_Brotnu_1.png
+            namedict = {
+                'name': name,
+                'attachment': png_folder+r'\\'+item
+                }
+            items.append(namedict)
     return items
 
 # Returns a list of objectid of which profiles that is going to update picture and the picture
-def get_objectid(fl_hf, profiler):
+def get_objectid(fl_hf, items, feature_name):
     fl_features = fl_hf.query().features
     objectsandattachments = []
-    arcpy.AddMessage(f'Profiler som skal oppdateres: ')
-    for profil in profiler:
-        nr, navn, attachment = profil.get('profilnr'), profil.get('sonenavn'), profil.get('attachment')
-        arcpy.AddMessage(f'Oppdaterer profil {navn}_{nr}')
+    arcpy.AddMessage(f'Elementer som skal oppdateres: ')
+    for item in items:
+        name, attachment = item.get('name'), item.get('attachment')
+        arcpy.AddMessage(f'Oppdaterer profil: {name}')
         # try:
-        filtered_features = [f for f in fl_features if f.attributes['Profil_Sone'] == navn and f.attributes['Profil_Profilnummer'] == nr]
+        filtered_features = [f for f in fl_features if f.attributes[feature_name] == name]
         # except Exception as e:
         # arcpy.AddMessage(f'Sammensvarer profil navn og nummer på bildet med linjenavnet i GIS? Bildet skal hete sonenr_sonenavn_profilnr, {type(e)}')
 
         if filtered_features:
             edit_feature = filtered_features[0]
+            print(edit_feature.attributes.get('OBJECTID'))
+            oid = edit_feature.attributes.get('OBJECTID')
+        
+            updated_feature = edit_feature
+            update_res = fl_hf.edit_features(updates=[updated_feature])
+
+            objectsandattachmentdict = {
+                'objectid': oid,
+                'attachment': attachment
+                            }
+            objectsandattachments.append(objectsandattachmentdict)
         else:
             # handle the case where no matching feature was found
-            arcpy.AddWarning(f'Sammensvarer profil navn og nummer på bildet med profilnavnet i GIS? Bildet skal hete sonenr_sonenavn_profilnr, {filtered_features}')
-            edit_feature = None  # or some other default value
+            arcpy.AddWarning(f'Sammensvarer navnet på PNG-filen med elementnavnet i GIS? ArcGis: {filtered_features}, PNG-navn: {name}')
+            continue
+            #edit_feature = None  # or some other default value
 
-        print(edit_feature.attributes.get('OBJECTID'))
-        oid = edit_feature.attributes.get('OBJECTID')
-    
-        updated_feature = edit_feature
-        updated_feature.attributes['Layer'] = 'Oppdatert'
-        update_res = fl_hf.edit_features(updates=[updated_feature])
-
-        objectsandattachmentdict = {
-            'objectid': oid,
-            'attachment': attachment
-                        }
-        objectsandattachments.append(objectsandattachmentdict)
+        
     return objectsandattachments
 
 
@@ -116,6 +104,7 @@ def update_attachments(feature_layer, objectsandattachments):
 def main():
     input_lyr = arcpy.GetParameter(0)
     png_folder = arcpy.GetParameterAsText(1)
+    feature_name = arcpy.GetParameterAsText(2)
 
     service_url = input_lyr.connectionProperties["connection_info"]["url"]
     fl_url = service_url + "/" + input_lyr.connectionProperties["dataset"]
@@ -130,7 +119,7 @@ def main():
 
     items = img_folder_items(png_folder)
     print(items)
-    objectsandattachments = get_objectid(fl_hf, items)
+    objectsandattachments = get_objectid(fl_hf, items, feature_name)
     update_attachments(fl_hf, objectsandattachments)
     
 

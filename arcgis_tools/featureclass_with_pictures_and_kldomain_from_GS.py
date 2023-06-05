@@ -2,57 +2,21 @@
 # -*- coding: utf-8 -*-
 
 ############################################
-# For dette scriptet trengs følgende pakker:
+# For dette scriptet trengs følgende pakker: 
 # pip install pymupdf
 # pip install opencv-python
-# pip install pypdf
 ############################################
 
 #  For import excel from GS
 import os
 import arcpy
 import pandas as pd
-from arcgis.features import GeoAccessor
-from arcgis.gis import GIS
 
 #  For creating pngs from pdfs
 import fitz  # pymupdf
 from pathlib import Path
 import cv2
 import numpy as np
-
-# Split PDFs
-from pypdf import PdfWriter, PdfReader
-
-# In dev:
-'''def rename_pr_pdf(pdffolder):
-    path = Path(pdffolder)
-    l_pdfs = [f for f in path.glob('*godkjenning.pdf')]
-    for pdf0 in l_pdfs:
-        pdf = str(pdf)
-        pdfname = pdf.split("\\")[-1].split('.')[0].split('-')
-    '''
-
-# Funker bare hvis prøven heter BPnavn_PR.pdf
-'''def splitpdfs(pdffolder):
-    path = Path(pdffolder)
-    l_pdfs = [f for f in path.glob('*PR.pdf')]
-    i0 = 0
-    if len(l_pdfs) > 0:
-        i0 = 0
-    for pdf0 in l_pdfs:
-        pdf = str(pdf0)
-        pdfname = pdf.split("\\")[-1].split('.')[0]
-        inputpdf = PdfReader(open(pdf, "rb"))
-        for i in range(len(inputpdf.pages)):
-            output = PdfWriter()
-            output.add_page(inputpdf.pages[i])
-            with open(pdffolder+"\\"+pdfname+"%s.pdf" % (i+1), "wb") as outputStream:
-                output.write(outputStream)
-            if i > i0:
-                i0 = i+1
-    return i0'''
-
 
 
 #  Create pngs from PDFs: Two functions clip_image and pdf2img 
@@ -98,13 +62,6 @@ def pdf2img(p):
             clip_image(f_out, pdf.stem)
         except:
             print(f'failed clip on {f_out}')
-
-
-"""
-Example: You have a folder of digital photographs of vacant homes; the photos
-         are named according to the ParcelID of the house in the picture. You'll 
-         add these photos to a parcel feature class as attachments.
-"""
 
 
 def add_picture(input_fc, inputField, pathField):
@@ -154,17 +111,16 @@ def z_kom(row):
 
 def bilde(row, url):
     val = url + r'\images' + "\\" + row['Borhull'] + '.png'
-    arcpy.AddMessage(val)
+    # arcpy.AddMessage(val)
     return val
 
 def bildePR(row, url, nrPR):
     val = url + r'\images' + "\\" + row['Borhull'] + '_PR' + str(nrPR) + '.png'
-    # arcpy.AddMessage(val)
+    arcpy.AddMessage(val)
     return val   
 
-def kvikkleire(row):
-    val = '0'
-    return val
+def kvikkleire():
+    return '0'
 
 def create_kvikkleire_domain(gdb, in_features):
     # Process: Create the coded value domain
@@ -189,7 +145,7 @@ def create_kvikkleire_domain(gdb, in_features):
     for code in dom_dict:
         arcpy.AddCodedValueToDomain_management(gdb, domain_name, code, dom_dict[code])
     # Process: Constrain the material value of distribution mains
-    arcpy.AssignDomainToField_management(in_features, in_field, domain_name)
+    arcpy.AssignDomainToField_management(in_features, in_field, domain_name)    
 
 def main():
     """ Main program """
@@ -200,19 +156,17 @@ def main():
     crs = arcpy.GetParameterAsText(2)
     xl_file = arcpy.GetParameterAsText(3)
     pdf_folder = arcpy.GetParameterAsText(4)
-    arcpy.AddMessage(pdf_folder)
+    # arcpy.AddMessage(pdf_folder)
     params = arcpy.GetParameterInfo() 
 
-
-    # Split pdfs into many pdfs
-    nr_PRs = splitpdfs(pdf_folder)
-
     # Create pngs from PDFs:
+    arcpy.AddMessage(f'Creating pictures from PDF folder: {pdf_folder}')
     pdf2img(pdf_folder)
+
+    
     
     fc_out = os.path.join(ws, arcpy.ValidateFieldName(fc_name))
-    symbology_lyr = r'\\nsv2-nasuni-02\GIS\03_FO\Geo\01_Felles\LYRS\borepoints\DictSymbology_OneLabelClassCG.lyrx'
-    #symbology_lyr = r'https://cloudgis.multiconsult.no/server/rest/services/Hosted/TestSymbologyLyrx/FeatureServer/301'
+    symbology_lyr = r'\\nsv2-nasuni-02\GIS\03_FO\Geo\01_Felles\LYRS\borepoints\ImportExcelFromGeosuiteFSU_improvedLabels.lyrx'
     cols = ['Borhull', 'X', 'Y', 'Z', 'Metode', 'Stopp', 'Løsm', 'Fjell']
 
     if xl_file.endswith('.xls'):
@@ -221,23 +175,24 @@ def main():
         df = pd.read_excel(xl_file, engine='openpyxl', usecols=cols)
     
     df['Borhull'] = df['Borhull'].astype("string")
-    arcpy.AddMessage(df.dtypes)
+    # arcpy.AddMessage(df.dtypes)
     df['Tolket'] = df.apply(tolket, axis=1)
     df['Bergkote'] = df.apply(bergkote, axis=1)
     df['kommentar'] = df.apply(z_kom, axis=1)
     df['kvikkleire'] = df.apply(kvikkleire, axis=1)
     df['Bilde'] = df.apply(bilde, url=pdf_folder, axis=1)
+    arcpy.AddMessage(f'Creating feature class with columns: {df.columns}')
+
+    # Round relvant columns
     round_cols = ['Z','Løsm','Fjell']
     df[round_cols] = df[round_cols].round(1)
-    
-    arcpy.AddMessage('RAD Bilde_PR'+str(1))
-    df['Bilde_PR'+str(1)] = df.apply(bildePR, url=pdf_folder, nrPR=1, axis=1)
-    #add_picture(fc_out, 'OBJECTID', 'Bilde_PR'+str(PR+1))
+    # Check to see if there are any Prøveserier
 
     sedf = pd.DataFrame.spatial.from_xy(df, 'Y', 'X', sr=crs)
     sedf['Metode'] = sedf['Metode'].apply(remove_word, word='Tolk')
     sedf.spatial.to_featureclass(location=fc_out)
 
+    arcpy.AddMessage(f'Adding dictionary symbology from {symbology_lyr}.')
     out_lyr = arcpy.MakeFeatureLayer_management(fc_out, fc_name)
     params[5].symbology = symbology_lyr
     arcpy.SetParameterAsText(5, out_lyr)
@@ -245,12 +200,12 @@ def main():
     # Enable attachments:
     # The input feature class must first be GDB attachments enabled
     arcpy.EnableAttachments_management(fc_out)
+
+    arcpy.AddMessage(f'Adding pictures as attachments...')
     # Add sounding profile
     add_picture(fc_out, 'OBJECTID', 'Bilde')
     
-    
-    add_picture(fc_out, 'OBJECTID', 'Bilde_PR'+str(1))
-
+    arcpy.AddMessage(f'Adding domain to feature layer attribute kvikkleire')
     create_kvikkleire_domain(ws, fc_out)
 
 if __name__ == "__main__":

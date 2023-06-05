@@ -6,3 +6,6 @@ plotly
 scipy
 pymupdf
 opencv-python
+flake8
+black
+PyPDF2
