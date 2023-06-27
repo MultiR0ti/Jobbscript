@@ -5,8 +5,9 @@ import cv2 # pip install opencv-python
 import numpy as np
 
 # path to pdf directory:
-pth = r'\\nsv2-nasuni-01\Prosjekt\O10244\10244558-01\10244558-01-03 ARBEIDSOMRAADE\10244558-01 RIG\10244558-01-04 TEGNINGER\Kritiske profiler etter GRUS\PDF'
-#pth = r'\\nsv2-nasuni-01\Prosjekt\O10244\10244558-01\10244558-01-03 ARBEIDSOMRAADE\10244558-01 RIG\10244558-01-10 GEOSUITE\GEOSUITE tidligere grunnundersøkelser\_Samlet\AUTOGRAF.RIT'
+#pth = r'\\nsv2-nasuni-01\Prosjekt\O10244\10244558-01\10244558-01-03 ARBEIDSOMRAADE\10244558-01 RIG\10244558-01-04 TEGNINGER\Kritiske profiler etter GRUS\PDF'
+#pth = r'\\nsv2-nasuni-01\Prosjekt\O10244\10244558-01\10244558-01-03 ARBEIDSOMRAADE\10244558-01 RIG\10244558-01-10 GEOSUITE\GEOSUITE tidligere grunnundersokelser\_Samlet\AUTOGRAF.RIT'
+pth = r'\\nsv2-nasuni-02\GIS\03_FO\Geo\02_Geoteknikk\GIS_data\pdfs'
 
 def clip_image(image: str, name: str):
     """Clips the white spaces from the image"""
@@ -18,7 +19,7 @@ def clip_image(image: str, name: str):
     rect = img[y:y+h, x:x+w]  # Crop the image - note we do this on the original image
     print(f'Cropping image {name} x:{x}, y:{y}, w:{w}, h:{h}')
     cv2.imwrite(image, rect)  # Save the image
-
+    
 
 def pdf2img(pdf_path: str):
     """

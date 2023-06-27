@@ -5,7 +5,7 @@ import lxml.etree as ET
 
 
 # Input polygon shapefile converted from TIN surface
-tin_shp = r'C:\Users\jdr\TinPython\TIN-filer\Test\_9_5_Bunn_Geophysix_triangles'
+tin_shp = r'\\nsv2-nasuni-01\Prosjekt\O10223\10223695-11\10223695-11-03 ARBEIDSOMRAADE\10223695-11 RIG\10223695-11-05 MODELLER\TIN\Gjerdrum_kyken_2023_0505_tin_triangles.shx'
 
 # Outputs
 out_xml = os.path.splitext(tin_shp)[0]+'_Surface.xml'
