@@ -1,0 +1,12 @@
+
+*.GeoProfileVenv
+*.GeoProfileVenv/
+
+# Ignore Python cache files
+__pycache__/
+
+# Ignore Python bytecode files
+*.pyc
+
+
+
