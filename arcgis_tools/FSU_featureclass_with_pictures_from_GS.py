@@ -41,9 +41,11 @@ def splitpdfs(pdffolder):
             output.add_page(inputpdf.pages[i])
             with open(pdffolder+"\\"+pdfname+"%s.pdf" % (i+1), "wb") as outputStream:
                 output.write(outputStream)
-            max_i = i+1 if i+1 > max_i else max_i 
+            max_i = i+1 if i+1 > max_i else max_i
     return max_i, pdf_names
-#  Create pngs from PDFs: Two functions clip_image and pdf2img 
+#  Create pngs from PDFs: Two functions clip_image and pdf2img
+
+
 def clip_image(i, name):
 
     img = cv2.imread(i)  # Read in the image and convert to grayscale
@@ -51,7 +53,8 @@ def clip_image(i, name):
     gray = 255*(gray < 128).astype(np.uint8)  # To invert the text to white
     coords = cv2.findNonZero(gray)  # Find all non-zero points (text)
     x, y, w, h = cv2.boundingRect(coords)  # Find minimum spanning bounding box
-    rect = img[y:y+h, x:x+w]  # Crop the image - note we do this on the original image
+    # Crop the image - note we do this on the original image
+    rect = img[y:y+h, x:x+w]
     print(f'Cropping image {name} x:{x}, y:{y}, w:{w}, h:{h}')
     cv2.imwrite(i, rect)  # Save the image
 
@@ -62,7 +65,8 @@ def pdf2img(p):
     requires 'clip_image' function
     """
     p_out = p + r'\images'
-    Path(p_out).mkdir(parents=True, exist_ok=True)  # create the 'images' folder if it doesn't exist
+    # create the 'images' folder if it doesn't exist
+    Path(p_out).mkdir(parents=True, exist_ok=True)
     path = Path(p)
     l_pdfs = [f for f in path.glob('*.pdf')]
     # Check if existing already
@@ -91,7 +95,7 @@ def pdf2img(p):
 def add_picture(input_fc, inputField, pathField):
 
     # Use the match table with the Add Attachments tool
-    arcpy.AddAttachments_management(input_fc, inputField, input_fc, inputField, 
+    arcpy.AddAttachments_management(input_fc, inputField, input_fc, inputField,
                                     pathField, None)
 
 
@@ -111,14 +115,14 @@ def remove_word(sentence, word):
 
 def tolket(row):
     val = ''
-    if isinstance(row['Metode'], str):        
+    if isinstance(row['Metode'], str):
         if 'Tolk' in row['Metode']:
             val = 'Tolk'
     return val
 
 
 def bergkote(row):
-    if row['Stopp'] in [93,94]:
+    if row['Stopp'] in [93, 94]:
         val = str(round(row['Z'] - row['Løsm'], 1))
     else:
         val = '~'
@@ -138,18 +142,22 @@ def bilde(row, url):
     # arcpy.AddMessage(val)
     return val
 
+
 def bildePR(row, url, nrPR, pr_pdfs):
     borhulls = [pr for pr in pr_pdfs if row['Borhull'] in pr]
-    if borhulls: 
-        val = url + r'\images' + "\\" + row['Borhull'] + '_PR' + str(nrPR) + '.png'
+    if borhulls:
+        val = url + r'\images' + "\\" + \
+            row['Borhull'] + '_PR' + str(nrPR) + '.png'
     else:
         val = ''
     arcpy.AddMessage(val)
-    return val   
+    return val
+
 
 def kvikkleire(row):
     val = '0'
     return val
+
 
 def create_kvikkleire_domain(gdb, in_features):
     # Process: Create the coded value domain
@@ -157,7 +165,8 @@ def create_kvikkleire_domain(gdb, in_features):
     in_field = 'kvikkleire'
     # arcpy.AddMessage(f'Geodatabase: {gdb}')
     try:
-        arcpy.CreateDomain_management(gdb, domain_name, domain_name, "TEXT", "CODED")
+        arcpy.CreateDomain_management(
+            gdb, domain_name, domain_name, "TEXT", "CODED")
         arcpy.AddMessage(f'Created domain {domain_name}')
     except:
         arcpy.AddMessage(f'Using domain {domain_name}')
@@ -172,9 +181,11 @@ def create_kvikkleire_domain(gdb, in_features):
     # Process: Add valid material types to the domain
     # use a for loop to cycle through all the domain codes in the dictionary
     for code in dom_dict:
-        arcpy.AddCodedValueToDomain_management(gdb, domain_name, code, dom_dict[code])
+        arcpy.AddCodedValueToDomain_management(
+            gdb, domain_name, code, dom_dict[code])
     # Process: Constrain the material value of distribution mains
-    arcpy.AssignDomainToField_management(in_features, in_field, domain_name)    
+    arcpy.AssignDomainToField_management(in_features, in_field, domain_name)
+
 
 def main():
     """ Main program """
@@ -185,20 +196,20 @@ def main():
     crs = arcpy.GetParameterAsText(2)
     xl_file = arcpy.GetParameterAsText(3)
     pdf_folder = arcpy.GetParameterAsText(4)
+    pdf_folder_PR = r'\\nsv2-nasuni-01\Prosjekt\O10244\10244558-01\10244558-01-03 ARBEIDSOMRAADE\10244558-01 RIG\10244558-01-07 FELT- OG LABREGISTRERINGER\Prøveserier'
     # arcpy.AddMessage(pdf_folder)
-    params = arcpy.GetParameterInfo() 
-
+    params = arcpy.GetParameterInfo()
 
     # Split pdfs into many pdfs
-    max_nr_PRs, pr_pdfs = splitpdfs(pdf_folder)[0], splitpdfs(pdf_folder)[1]
-    
+    max_nr_PRs, pr_pdfs = splitpdfs(pdf_folder_PR)[
+        0], splitpdfs(pdf_folder_PR)[1]
 
     # Create pngs from PDFs:
     arcpy.AddMessage(f'Creating pictures from PDF folder: {pdf_folder}')
     pdf2img(pdf_folder)
+    arcpy.AddMessage(f'Creating pictures from PDF folder: {pdf_folder_PR}')
+    pdf2img(pdf_folder_PR)
 
-    
-    
     fc_out = os.path.join(ws, arcpy.ValidateFieldName(fc_name))
     symbology_lyr = r'\\nsv2-nasuni-02\GIS\03_FO\Geo\01_Felles\LYRS\borepoints\DictSymbology_TwoLabelClassesEU.lyrx'
     cols = ['Borhull', 'X', 'Y', 'Z', 'Metode', 'Stopp', 'Løsm', 'Fjell']
@@ -207,7 +218,7 @@ def main():
         df = pd.read_html(xl_file, decimal=',', thousands=None)[0][cols]
     else:
         df = pd.read_excel(xl_file, engine='openpyxl', usecols=cols)
-    
+
     df['Borhull'] = df['Borhull'].astype("string")
     # arcpy.AddMessage(df.dtypes)
     df['Tolket'] = df.apply(tolket, axis=1)
@@ -219,18 +230,18 @@ def main():
     if max_nr_PRs > 0:
         for i in range(max_nr_PRs):
             arcpy.AddMessage('RAD BildePR'+str(i+1))
-            df['Bilde_PR'+str(i+1)] = df.apply(bildePR, url=pdf_folder, nrPR=(i+1), pr_pdfs=pr_pdfs, axis=1)
-            #add_picture(fc_out, 'OBJECTID', 'Bilde_PR'+str(PR+1))
+            df['Bilde_PR'+str(i+1)] = df.apply(bildePR,
+                                               url=pdf_folder_PR, nrPR=(i+1), pr_pdfs=pr_pdfs, axis=1)
+            # add_picture(fc_out, 'OBJECTID', 'Bilde_PR'+str(PR+1))
 
     arcpy.AddMessage(f'Creating feature class with columns: {df.columns}')
 
-
     # Round relvant columns
-    round_cols = ['Z','Løsm','Fjell']
+    round_cols = ['Z', 'Løsm', 'Fjell']
     df[round_cols] = df[round_cols].round(1)
     # Check to see if there are any Prøveserier
     # Filter out unrelevant borings
-    filtered_df = df.loc[df['Løsm'] > 0.5]    
+    filtered_df = df.loc[df['Løsm'] > 0.5]
 
     sedf = pd.DataFrame.spatial.from_xy(filtered_df, 'Y', 'X', sr=crs)
     sedf['Metode'] = sedf['Metode'].apply(remove_word, word='Tolk')
@@ -248,14 +259,14 @@ def main():
     arcpy.AddMessage(f'Adding pictures as attachments...')
     # Add sounding profile
     add_picture(fc_out, 'OBJECTID', 'Bilde')
-    
+
     if max_nr_PRs > 0:
         for PR in range(max_nr_PRs):
             add_picture(fc_out, 'OBJECTID', 'Bilde_PR'+str(PR+1))
-    
+
     arcpy.AddMessage(f'Adding domain to feature layer attribute kvikkleire')
     create_kvikkleire_domain(ws, fc_out)
 
+
 if __name__ == "__main__":
     main()
-

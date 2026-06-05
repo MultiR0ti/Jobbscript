@@ -10,10 +10,10 @@ from PIL import Image
 
 
 
-# pdf_path = r'C:\Users\jdr\OneDrive - Multiconsult\Skrivebord\Totsonderinger\Lay_totalsonderinger A4.pdf'
+pdf_path = r'C:\Users\jdr\OneDrive - Multiconsult\Skrivebord\Totsonderinger\Lay_totalsonderinger A4.pdf'
 out_directory = r'C:\Users\jdr\OneDrive - Multiconsult\Skrivebord\Totsonderinger'
 
-pic_path = r'C:\Users\jdr\OneDrive - Multiconsult\Skrivebord\Totsonderinger\0.png'
+#pic_path = r'C:\Users\jdr\OneDrive - Multiconsult\Skrivebord\Totsonderinger\0.png'
 
 # PDF_file = Path(pdf_path)
 
@@ -24,6 +24,7 @@ pytesseract.pytesseract.tesseract_cmd = (
 )
 text = str(((pytesseract.image_to_string(Image.open(pic_path)))))
 text.strip()
+print(text)
 bp_name = text.partition('\n')[0]
 
 

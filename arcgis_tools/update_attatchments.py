@@ -66,12 +66,14 @@ def get_objectid(fl_hf, profiler):
             edit_feature = filtered_features[0]
         else:
             # handle the case where no matching feature was found
-            arcpy.AddWarning(f'Sammensvarer profil navn og nummer på bildet med profilnavnet i GIS? Bildet skal hete sonenr_sonenavn_profilnr, {filtered_features}')
+            arcpy.AddWarning(f'Sammensvarer profil navn og nummer {navn}_{nr} på bildet med profilnavnet i GIS? Bildet skal hete sonenr_sonenavn_profilnr, {filtered_features}')
             edit_feature = None  # or some other default value
 
-        print(edit_feature.attributes.get('OBJECTID'))
-        oid = edit_feature.attributes.get('OBJECTID')
-    
+        try:
+            oid = edit_feature.attributes.get('OBJECTID')
+        except AttributeError:
+            continue
+            
         updated_feature = edit_feature
         updated_feature.attributes['Layer'] = 'Oppdatert'
         update_res = fl_hf.edit_features(updates=[updated_feature])

@@ -28,7 +28,7 @@ def img_folder_items(png_folder):
             continue
         if item.split('.')[-1] == 'png':
             name = item.split('.')[0]
-            # If item like 81_Brotnu_1.png
+            # If item like 40-5.png
             namedict = {
                 'name': name,
                 'attachment': png_folder+r'\\'+item
@@ -45,6 +45,11 @@ def get_objectid(fl_hf, items, feature_name):
         name, attachment = item.get('name'), item.get('attachment')
         arcpy.AddMessage(f'Oppdaterer profil: {name}')
         # try:
+        # if "PR" in name:
+        #     name = name.split("_PR")[0]
+        # elif "PR1" in name:
+        #     name = name.split("_PR1")[0]
+
         filtered_features = [f for f in fl_features if f.attributes[feature_name] == name]
         # except Exception as e:
         # arcpy.AddMessage(f'Sammensvarer profil navn og nummer på bildet med linjenavnet i GIS? Bildet skal hete sonenr_sonenavn_profilnr, {type(e)}')
@@ -87,6 +92,7 @@ def update_attachments(feature_layer, objectsandattachments):
             for a in existing_attachments:
                 a_id = a['id']
                 a_counter += 1
+                
                 feature_layer.attachments.delete(oid, a_id)
                 arcpy.AddMessage(f'Update attachement {a["name"]}')
                 # Update the progressor label
@@ -96,6 +102,7 @@ def update_attachments(feature_layer, objectsandattachments):
         else:
             arcpy.AddMessage(f'No attachement {oid}')
             
+        # if "_PR" in attachment:
         feature_layer.attachments.add(oid, attachment)
         arcpy.AddMessage(f'Attachments updated: {a_counter}')
 

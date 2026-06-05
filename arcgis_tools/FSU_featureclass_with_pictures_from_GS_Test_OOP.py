@@ -37,6 +37,7 @@ def main():
     crs = arcpy.GetParameterAsText(2)
     xl_file = arcpy.GetParameterAsText(3)
     pdf_folder = arcpy.GetParameterAsText(4)
+    eu_or_cloudgis = arcpy.GetParameterAsText(6)
     params = arcpy.GetParameterInfo()
 
     # Create pngs from PDFs:
@@ -44,7 +45,12 @@ def main():
     pdf2img(pdf_folder)
     
     fc_out = os.path.join(ws, arcpy.ValidateFieldName(fc_name))
-    symbology_lyr = r'\\nsv2-nasuni-02\GIS\03_FO\Geo\01_Felles\LYRS\borepoints\DictSymbology_TwoLabelClassesCG.lyrx'
+    
+    if eu_or_cloudgis.lower == 'eu':
+        symbology_lyr = r'\\nsv2-nasuni-02\GIS\03_FO\Geo\01_Felles\LYRS\borepoints\DictSymbology_TwoLabelClassesEU.lyrx'
+    else:
+        symbology_lyr = r'\\nsv2-nasuni-02\GIS\03_FO\Geo\01_Felles\LYRS\borepoints\DictSymbology_TwoLabelClassesCG.lyrx'
+
     cols = ['Borhull', 'X', 'Y', 'Z', 'Metode', 'Stopp', 'Løsm', 'Fjell']
 
     if xl_file.endswith('.xls'):

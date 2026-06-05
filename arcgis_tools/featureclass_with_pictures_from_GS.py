@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+############################################
+# For dette scriptet trengs følgende pakker:
+# pip install pymupdf
+# pip install opencv-python
+############################################
 
-#  For import execel from GS
+#  For import excel from GS
 import os
 import arcpy
 import pandas as pd
@@ -15,7 +20,7 @@ import cv2
 import numpy as np
 
 
-#  Create pngs from PDFs: Two functions clip_image and pdf2img 
+#  Create pngs from PDFs: Two functions clip_image and pdf2img
 def clip_image(i, name):
 
     img = cv2.imread(i)  # Read in the image and convert to grayscale
@@ -23,7 +28,8 @@ def clip_image(i, name):
     gray = 255*(gray < 128).astype(np.uint8)  # To invert the text to white
     coords = cv2.findNonZero(gray)  # Find all non-zero points (text)
     x, y, w, h = cv2.boundingRect(coords)  # Find minimum spanning bounding box
-    rect = img[y:y+h, x:x+w]  # Crop the image - note we do this on the original image
+    # Crop the image - note we do this on the original image
+    rect = img[y:y+h, x:x+w]
     print(f'Cropping image {name} x:{x}, y:{y}, w:{w}, h:{h}')
     cv2.imwrite(i, rect)  # Save the image
 
@@ -34,7 +40,8 @@ def pdf2img(pdf_path):
     requires 'clip_image' function
     """
     p_out = pdf_path + r'\images'
-    Path(p_out).mkdir(parents=True, exist_ok=True)  # create the 'images' folder if it doesn't exist
+    # create the 'images' folder if it doesn't exist
+    Path(p_out).mkdir(parents=True, exist_ok=True)
     path = Path(pdf_path)
     l_pdfs = [f for f in path.glob('*.pdf')]
     for pdf in l_pdfs:
@@ -66,7 +73,7 @@ def add_picture(input_fc, inputField, pathField):
     # The input feature class must first be GDB attachments enabled
     arcpy.EnableAttachments_management(input_fc)
     # Use the match table with the Add Attachments tool
-    arcpy.AddAttachments_management(input_fc, inputField, input_fc, inputField, 
+    arcpy.AddAttachments_management(input_fc, inputField, input_fc, inputField,
                                     pathField, None)
 
 
@@ -86,14 +93,14 @@ def remove_word(sentence, word):
 
 def tolket(row):
     val = ''
-    if isinstance(row['Metode'], str):        
+    if isinstance(row['Metode'], str):
         if 'Tolk' in row['Metode']:
             val = 'Tolk'
     return val
 
 
 def bergkote(row):
-    if row['Stopp'] in [93,94]:
+    if row['Stopp'] in [93, 94]:
         val = str(round(row['Z'] - row['Løsm'], 1))
     else:
         val = '~'
@@ -123,29 +130,29 @@ def main():
     crs = arcpy.GetParameterAsText(2)
     xl_file = arcpy.GetParameterAsText(3)
     pdf_folder = arcpy.GetParameterAsText(4)
-    #arcpy.AddMessage(crs)
-    #arcpy.AddMessage(pdf_folder)
-    params = arcpy.GetParameterInfo() 
+    # arcpy.AddMessage(crs)
+    # arcpy.AddMessage(pdf_folder)
+    params = arcpy.GetParameterInfo()
 
     # Create pngs from PDFs:
     pdf2img(pdf_folder)
-    
+
     fc_out = os.path.join(ws, arcpy.ValidateFieldName(fc_name))
-    symbology_lyr = r'\\nsv2-nasuni-02\GIS\03_FO\Geo\01_Felles\LYRS\borepoints\ImportExcelFromGeosuite_improvedLabels.lyrx'
+    symbology_lyr = r'\\nsv2-nasuni-02\GIS\03_FO\Geo\01_Felles\LYRS\borepoints\RegularSymbology_TwoLabelClasses.lyrx'
     cols = ['Borhull', 'X', 'Y', 'Z', 'Metode', 'Stopp', 'Løsm', 'Fjell']
 
     if xl_file.endswith('.xls'):
         df = pd.read_html(xl_file, decimal=',', thousands=None)[0][cols]
     else:
         df = pd.read_excel(xl_file, engine='openpyxl', usecols=cols)
-    
+
     df['Borhull'] = df['Borhull'].astype("string")
     arcpy.AddMessage(df.dtypes)
     df['Tolket'] = df.apply(tolket, axis=1)
     df['Bergkote'] = df.apply(bergkote, axis=1)
     df['kommentar'] = df.apply(z_kom, axis=1)
     df['Bilde'] = df.apply(bilde, url=pdf_folder, axis=1)
-    round_cols = ['Z','Løsm','Fjell']
+    round_cols = ['Z', 'Løsm', 'Fjell']
     df[round_cols] = df[round_cols].round(1)
     sedf = pd.DataFrame.spatial.from_xy(df, 'Y', 'X', sr=crs)
     sedf['Metode'] = sedf['Metode'].apply(remove_word, word='Tolk')
@@ -157,6 +164,6 @@ def main():
 
     add_picture(fc_out, 'OBJECTID', 'Bilde')
 
+
 if __name__ == "__main__":
     main()
-

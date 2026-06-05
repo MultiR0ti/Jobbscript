@@ -19,7 +19,7 @@ import numpy as np
 # Make a list of dict with file name and attachment
 def img_folder_items(png_folder) -> list:
     '''
-    Returns a list of dictionaries that contains which boreholde have new pictures
+    Returns a list of dictionaries that contains which borehole have new pictures
     '''
     item_name_and_attachment = []
     for item in os.listdir(png_folder):

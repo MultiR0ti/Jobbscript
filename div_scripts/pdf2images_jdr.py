@@ -1,33 +1,44 @@
 import os
 import fitz  # pip install pymupdf
 from pathlib import Path
-import cv2 # pip install opencv-python
+import cv2  # pip install opencv-python
 import numpy as np
 
 # path to pdf directory:
-#pth = r'\\nsv2-nasuni-01\Prosjekt\O10244\10244558-01\10244558-01-03 ARBEIDSOMRAADE\10244558-01 RIG\10244558-01-04 TEGNINGER\Kritiske profiler etter GRUS\PDF'
-#pth = r'\\nsv2-nasuni-01\Prosjekt\O10244\10244558-01\10244558-01-03 ARBEIDSOMRAADE\10244558-01 RIG\10244558-01-10 GEOSUITE\GEOSUITE tidligere grunnundersokelser\_Samlet\AUTOGRAF.RIT'
-pth = r'\\nsv2-nasuni-02\GIS\03_FO\Geo\02_Geoteknikk\GIS_data\pdfs'
+pth = r'\\nsv2-nasuni-01\Prosjekt\O10244\10244558-01\10244558-01-03 ARBEIDSOMRAADE\10244558-01 RIG\10244558-01-04 TEGNINGER\Kritiske profiler etter GRUS\PDF'
+# pth = r'\\nsv2-nasuni-01\Prosjekt\O10244\10244558-01\10244558-01-03 ARBEIDSOMRAADE\10244558-01 RIG\10244558-01-10 GEOSUITE\GEOSUITE tidligere grunnundersokelser\_Samlet\AUTOGRAF.RIT'
+# pth = r'\\nsv2-nasuni-02\GIS\03_FO\Geo\02_Geoteknikk\GIS_data\pdfs'
+
 
 def clip_image(image: str, name: str):
-    """Clips the white spaces from the image"""
+    """Clips the white spaces from the image
+
+    Args:
+        image (str): path to image
+        name (str): name of image
+    """
     img = cv2.imread(image)  # Read in the image and convert to grayscale
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     gray = 255*(gray < 128).astype(np.uint8)  # To invert the text to white
     coords = cv2.findNonZero(gray)  # Find all non-zero points (text)
     x, y, w, h = cv2.boundingRect(coords)  # Find minimum spanning bounding box
-    rect = img[y:y+h, x:x+w]  # Crop the image - note we do this on the original image
+    # Crop the image - note we do this on the original image
+    rect = img[y:y+h, x:x+w]
     print(f'Cropping image {name} x:{x}, y:{y}, w:{w}, h:{h}')
     cv2.imwrite(image, rect)  # Save the image
-    
+
 
 def pdf2img(pdf_path: str):
     """
     pdf_path: path of pdf directory.
     Uses and requires 'clip_image' function.
+
+    Args:
+        pdf_path (str): path to pdf directory
     """
     img_path = pdf_path + r'\images'
-    Path(img_path).mkdir(parents=True, exist_ok=True)  # create the 'images' folder if it doesn't exist
+    # create the 'images' folder if it doesn't exist
+    Path(img_path).mkdir(parents=True, exist_ok=True)
     path = Path(pdf_path)
     l_pdfs = [f for f in path.glob('*.pdf')]
     # Check if existing already
@@ -54,4 +65,3 @@ def pdf2img(pdf_path: str):
 
 
 pdf2img(pth)
-
